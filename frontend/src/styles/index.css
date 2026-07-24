@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F2F2F7;
+    color: #1C1C1E;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: none;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .ios-card {
+    @apply bg-white rounded-ios-lg shadow-ios;
+  }
+
+  .ios-btn {
+    @apply px-5 py-3 bg-ios-blue text-white font-semibold rounded-ios text-center transition-all active:scale-95;
+  }
+
+  .ios-btn-secondary {
+    @apply px-5 py-3 bg-ios-bg text-ios-blue font-semibold rounded-ios text-center transition-all active:scale-95;
+  }
+
+  .ios-input {
+    @apply w-full bg-white border border-ios-separator rounded-ios-lg px-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-ios-blue/30 transition-all;
+  }
+
+  .ios-nav {
+    @apply sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-ios-separator/50;
+  }
+
+  .ios-list-item {
+    @apply flex items-center justify-between px-4 py-3.5 bg-white border-b border-ios-separator/50 active:bg-ios-bg transition-colors;
+  }
+
+  .ios-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .ios-toast {
+    @apply fixed bottom-8 left-1/2 -translate-x-1/2 px-5 py-3 bg-gray-800/90 text-white text-sm rounded-ios-xl shadow-ios-modal backdrop-blur-lg z-50;
+  }
+}
+
+/* iOS-style scrollbar */
+::-webkit-scrollbar { width: 0; }
+
+/* Animations */
+@keyframes ios-slide-up {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ios-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ios-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-ios-slide-up {
+  animation: ios-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ios-fade-in {
+  animation: ios-fade-in 0.3s ease forwards;
+}
+
+.animate-ios-bounce {
+  animation: ios-bounce 2s ease-in-out infinite;
+}
+
+/* Safe area for notched devices */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
