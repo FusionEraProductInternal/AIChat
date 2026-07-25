@@ -26,7 +26,9 @@ export default function EmbedGenerator({ config }) {
 
   const apiKey = config?.apiKey || 'tf_demo_123456789'
   const activeTheme = THEMES.find(t => t.id === selectedTheme)
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+  const baseUrl = import.meta.env.DEV
+    ? 'http://localhost:3000'
+    : 'https://api.techfusionera.com'
 
   const embedCode = `<!-- TechFusionEra AI Chatbot -->
 <script 
@@ -109,9 +111,8 @@ export default function EmbedGenerator({ config }) {
                 <button
                   key={t.id}
                   onClick={() => setSelectedTheme(t.id)}
-                  className={`theme-card p-3.5 rounded-xl border-2 text-left ${
-                    active ? 'border-[#0F9B8E] bg-[#0F9B8E]/[0.05]' : 'border-transparent bg-[#FAFAF8]'
-                  }`}
+                  className={`theme-card p-3.5 rounded-xl border-2 text-left ${active ? 'border-[#0F9B8E] bg-[#0F9B8E]/[0.05]' : 'border-transparent bg-[#FAFAF8]'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -145,11 +146,10 @@ export default function EmbedGenerator({ config }) {
               <button
                 key={pos.id}
                 onClick={() => setPosition(pos.id)}
-                className={`py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  position === pos.id
+                className={`py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${position === pos.id
                     ? 'bg-[#0B1220] text-white'
                     : 'bg-[#FAFAF8] text-[#475569] hover:bg-[#0B1220]/5'
-                }`}
+                  }`}
               >
                 {pos.label}
               </button>
@@ -218,9 +218,8 @@ export default function EmbedGenerator({ config }) {
             </h3>
             <button
               onClick={copyToClipboard}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 ${
-                copied ? 'bg-emerald-50 text-emerald-600' : 'bg-[#0F9B8E]/10 text-[#0F9B8E] hover:bg-[#0F9B8E]/20'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 ${copied ? 'bg-emerald-50 text-emerald-600' : 'bg-[#0F9B8E]/10 text-[#0F9B8E] hover:bg-[#0F9B8E]/20'
+                }`}
             >
               {copied
                 ? <Check className="w-3.5 h-3.5 check-pop" />
