@@ -23,7 +23,7 @@
   if (!scriptTag) return;
 
   const scriptUrl = scriptTag.src || '';
-  let defaultApiUrl = 'http://localhost:3000/api';
+  let defaultApiUrl = 'https://aichat-backend-wfe1.onrender.com/api';
   if (scriptUrl) {
     try { defaultApiUrl = new URL(scriptUrl).origin + '/api'; } catch (e) { }
   }
@@ -40,9 +40,9 @@
   // Theme colors
   const themes = {
     hospital: { primary: '#0F9B8E', icon: '🏥' },
-    hotel:    { primary: '#D97706', icon: '🏨' },
+    hotel: { primary: '#D97706', icon: '🏨' },
     business: { primary: '#2563EB', icon: '💼' },
-    dark:     { primary: '#0B1220', icon: '💬' }
+    dark: { primary: '#0B1220', icon: '💬' }
   };
   const theme = themes[config.theme] || themes.hospital;
   const isRight = config.position.includes('right');
@@ -226,14 +226,14 @@
   document.body.appendChild(container);
 
   // ── Elements ───────────────────────────────────────────────────────
-  const toggleBtn      = document.getElementById('tf-chat-toggle');
-  const windowEl       = document.getElementById('tf-chat-window');
-  const closeBtn       = document.getElementById('tf-chat-close');
-  const messagesEl     = document.getElementById('tf-chat-messages');
-  const suggestionsEl  = document.getElementById('tf-chat-suggestions');
-  const inputEl        = document.getElementById('tf-chat-input');
-  const sendBtn        = document.getElementById('tf-chat-send');
-  const statusEl       = document.getElementById('tf-chat-header-status');
+  const toggleBtn = document.getElementById('tf-chat-toggle');
+  const windowEl = document.getElementById('tf-chat-window');
+  const closeBtn = document.getElementById('tf-chat-close');
+  const messagesEl = document.getElementById('tf-chat-messages');
+  const suggestionsEl = document.getElementById('tf-chat-suggestions');
+  const inputEl = document.getElementById('tf-chat-input');
+  const sendBtn = document.getElementById('tf-chat-send');
+  const statusEl = document.getElementById('tf-chat-header-status');
 
   let isOpen = false;
   let messages = [];
