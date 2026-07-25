@@ -12,7 +12,7 @@
  *   ></script>
  */
 
-(function () {
+function tfInitChatbot() {
   'use strict';
 
   // Prevent duplicate initialization
@@ -608,5 +608,11 @@
   // ── Start: initialize WebLLM engine in background ─────────────────
   initEngine();
 
-  console.log('✅ TechFusionEra AI Chatbot loaded. API Key:', config.apiKey);
-})();
+console.log('✅ TechFusionEra AI Chatbot loaded. API Key:', config.apiKey);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', tfInitChatbot);
+} else {
+  tfInitChatbot();
+}
