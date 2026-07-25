@@ -1,30 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Minimize2, Maximize2, Sparkles, Info } from 'lucide-react'
-
-const DEMO_RESPONSES = {
-  'visiting': 'General visiting hours are 4PM - 7PM daily. ICU visiting is restricted to 5PM - 6PM with 1 visitor only.',
-  'appointment': 'You can book an appointment online through our portal or call 022-12345678. Walk-ins are also accepted.',
-  'parking': 'Yes, we have free parking for 200 vehicles. Valet parking is available at ₹50.',
-  'insurance': 'We accept all major insurance providers including LIC, Star Health, and ICICI Lombard.',
-  'emergency': 'Emergency: Dial 108 or call 022-12345600 (24/7). Our emergency ward is always open.',
-  'doctor': 'Dr. Sharma is available Mon-Fri 9AM-5PM. For other doctors, please check our doctors directory.',
-  'check': 'Check-in starts at 2:00 PM. Early check-in is available on request.',
-  'wifi': 'Yes, free high-speed WiFi is available throughout the property.',
-  'breakfast': 'Yes, complimentary breakfast is served from 7:00 AM to 10:30 AM.',
-  'gym': 'Yes, our fitness center is open 24/7 on the 3rd floor.',
-  'hello': 'Hello! How can I help you today?',
-  'hi': 'Hi there! What can I assist you with?',
-  'thank': 'You re welcome! Is there anything else I can help you with?',
-  'bye': 'Goodbye! Take care and feel free to reach out anytime.',
-}
-
-function getResponse(input) {
-  const lower = input.toLowerCase()
-  for (const [key, value] of Object.entries(DEMO_RESPONSES)) {
-    if (lower.includes(key)) return value
-  }
-  return "I'm not sure about that. Could you please rephrase or contact our support team at support@techfusionera.com?"
-}
+import { Send, Bot, User, Minimize2, Maximize2, Sparkles, Info, Loader2 } from 'lucide-react'
+import { useWebLLM } from '../hooks/useWebLLM'
 
 /**
  * Matches the "Signal" design system used across the app:
@@ -32,15 +8,29 @@ function getResponse(input) {
  * Space Grotesk (display) · Inter (body) · JetBrains Mono (utility)
  */
 
-export default function TestChatbot() {
+export default function TestChatbot({ trainingData }) {
   const [messages, setMessages] = useState([
     { role: 'bot', text: 'Hello! I am your AI assistant. How can I help you today?' }
   ])
   const [input, setInput] = useState('')
   const [isOpen, setIsOpen] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
+  const [streamingText, setStreamingText] = useState('')
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+
+  const {
+    isLoading,
+    isReady,
+    progress,
+    progressText,
+    error,
+    engineMode,
+    webGpuSupported,
+    loadModel,
+    generateStreaming,
+    switchToFastMode
+  } = useWebLLM()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -48,21 +38,32 @@ export default function TestChatbot() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, isTyping])
+  }, [messages, isTyping, streamingText])
 
-  const sendMessage = () => {
-    if (!input.trim()) return
+  // Auto-load the AI model as soon as the widget mounts
+  useEffect(() => {
+    loadModel(trainingData || '')
+  }, [loadModel, trainingData])
+
+  const sendMessage = async () => {
+    if (!input.trim() || !isReady) return
 
     const userMsg = input.trim()
+    const history = messages.map(m => ({ role: m.role, text: m.text }))
     setMessages(prev => [...prev, { role: 'user', text: userMsg }])
     setInput('')
     setIsTyping(true)
+    setStreamingText('')
 
-    setTimeout(() => {
-      const response = getResponse(userMsg)
-      setMessages(prev => [...prev, { role: 'bot', text: response }])
-      setIsTyping(false)
-    }, 800 + Math.random() * 1000)
+    let finalText = ''
+    await generateStreaming(userMsg, history, (text) => {
+      finalText = text
+      setStreamingText(text)
+    })
+
+    setMessages(prev => [...prev, { role: 'bot', text: finalText }])
+    setStreamingText('')
+    setIsTyping(false)
   }
 
   const handleKeyDown = (e) => {
@@ -72,13 +73,29 @@ export default function TestChatbot() {
     }
   }
 
-  const suggestions = [
-    'What are the visiting hours?',
-    'How do I book an appointment?',
-    'Is parking available?',
-    'What insurance do you accept?',
-    'Emergency contact number?',
-  ]
+  const getDynamicSuggestions = () => {
+    if (trainingData) {
+      try {
+        const parsed = JSON.parse(trainingData)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const qs = parsed.map(item => item.q || item.question || '').filter(q => q && q.trim().length > 2)
+          if (qs.length > 0) return qs.slice(0, 5)
+        }
+      } catch {
+        const lines = trainingData.split('\n').map(l => l.trim()).filter(l => l.length > 5)
+        if (lines.length > 0) return lines.slice(0, 5)
+      }
+    }
+    return [
+      'What are the visiting hours?',
+      'How do I book an appointment?',
+      'Is parking available?',
+      'What insurance do you accept?',
+      'Emergency contact number?',
+    ]
+  }
+
+  const suggestions = getDynamicSuggestions()
 
   return (
     <div
@@ -128,8 +145,11 @@ export default function TestChatbot() {
           display: grid;
         }
 
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin-slow { animation: spin 1.6s linear infinite; }
+
         @media (prefers-reduced-motion: reduce) {
-          .msg-in, .chip-in, .typing-dot, .signal-dot::before { animation: none !important; }
+          .msg-in, .chip-in, .typing-dot, .signal-dot::before, .spin-slow { animation: none !important; }
         }
       `}</style>
 
@@ -140,6 +160,45 @@ export default function TestChatbot() {
           <h1 className="font-display font-semibold text-2xl sm:text-3xl text-[#0B1220]">Test your chatbot</h1>
           <p className="text-[#475569] text-sm mt-1.5">Ask it something the way a real patient or customer would.</p>
         </div>
+
+        {/* AI Model Status */}
+        {!isReady && (
+          <div className="rounded-2xl border border-[#0B1220]/8 bg-white p-5 mb-5 space-y-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Loader2 className="w-5 h-5 text-[#0F9B8E] spin-slow flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-[#0B1220] font-semibold flex items-center gap-2">
+                    Loading AI model… {progress}%
+                  </p>
+                  <p className="text-xs text-[#0F9B8E] font-mono mt-1 font-medium bg-[#0F9B8E]/8 px-2 py-0.5 rounded inline-block">
+                    {progressText || 'Initializing neural engine...'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={switchToFastMode}
+                className="px-3.5 py-2 bg-[#0F9B8E] hover:bg-[#12B5A6] text-white text-xs font-semibold rounded-xl shadow-sm transition-all duration-150 flex items-center justify-center gap-1.5 flex-shrink-0 self-start sm:self-center"
+              >
+                ⚡ Switch to Instant AI (No Download)
+              </button>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="h-2 bg-[#0B1220]/8 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#0F9B8E] rounded-full transition-all duration-300"
+                style={{ width: `${Math.max(progress, 5)}%` }}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-[#475569]">
+              <span>First-time setup — downloads model once and caches in browser.</span>
+              <span className="font-mono text-[#0F9B8E] font-medium">{progress}% downloaded</span>
+            </div>
+          </div>
+        )}
 
         {/* Suggested Questions */}
         <div className="rounded-2xl border border-[#0B1220]/8 bg-white p-5 mb-5">
@@ -175,17 +234,28 @@ export default function TestChatbot() {
                     <span className="signal-dot absolute inset-0" />
                     <span className="absolute inset-0 rounded-full bg-emerald-400" />
                   </span>
-                  Online
+                  {isReady
+                    ? engineMode === 'webllm'
+                      ? 'Online'
+                      : 'Online (Instant Fast AI)'
+                    : 'Loading…'}
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-white/50 hover:text-white transition-colors duration-200"
-              aria-label={isOpen ? 'Minimize' : 'Expand'}
-            >
-              {isOpen ? <Minimize2 className="w-4.5 h-4.5" /> : <Maximize2 className="w-4.5 h-4.5" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {isReady && engineMode === 'fast' && (
+                <span className="text-[10px] bg-[#0F9B8E]/20 text-[#0F9B8E] font-mono px-2 py-0.5 rounded border border-[#0F9B8E]/30">
+                  ⚡ Fast AI Active
+                </span>
+              )}
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="text-white/50 hover:text-white transition-colors duration-200"
+                aria-label={isOpen ? 'Minimize' : 'Expand'}
+              >
+                {isOpen ? <Minimize2 className="w-4.5 h-4.5" /> : <Maximize2 className="w-4.5 h-4.5" />}
+              </button>
+            </div>
           </div>
 
           <div className={`panel-collapse ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
@@ -199,11 +269,10 @@ export default function TestChatbot() {
                         <Bot className="w-3.5 h-3.5 text-[#0F9B8E]" />
                       </div>
                     )}
-                    <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#0B1220] text-white rounded-tr-sm'
-                        : 'bg-white text-[#0B1220] border border-[#0B1220]/6 rounded-tl-sm'
-                    }`}>
+                    <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
+                      ? 'bg-[#0B1220] text-white rounded-tr-sm'
+                      : 'bg-white text-[#0B1220] border border-[#0B1220]/6 rounded-tl-sm'
+                      }`}>
                       {msg.text}
                     </div>
                     {msg.role === 'user' && (
@@ -214,7 +283,18 @@ export default function TestChatbot() {
                   </div>
                 ))}
 
-                {isTyping && (
+                {isTyping && streamingText && (
+                  <div className="msg-in flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-[#0F9B8E]/10 flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-3.5 h-3.5 text-[#0F9B8E]" />
+                    </div>
+                    <div className="max-w-[75%] bg-white text-[#0B1220] border border-[#0B1220]/6 px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed">
+                      {streamingText}
+                    </div>
+                  </div>
+                )}
+
+                {isTyping && !streamingText && (
                   <div className="msg-in flex gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-[#0F9B8E]/10 flex items-center justify-center flex-shrink-0">
                       <Bot className="w-3.5 h-3.5 text-[#0F9B8E]" />
@@ -239,12 +319,13 @@ export default function TestChatbot() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Type your message…"
-                  className="flex-1 bg-[#FAFAF8] border border-[#0B1220]/8 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0F9B8E]/25 focus:border-[#0F9B8E]/40 transition-all duration-200"
+                  placeholder={isReady ? "Type your message…" : "Waiting for AI to load…"}
+                  disabled={!isReady}
+                  className="flex-1 bg-[#FAFAF8] border border-[#0B1220]/8 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0F9B8E]/25 focus:border-[#0F9B8E]/40 transition-all duration-200 disabled:opacity-50"
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || !isReady}
                   className="w-10 h-10 bg-[#0F9B8E] rounded-full flex items-center justify-center text-white disabled:opacity-30 disabled:active:scale-100 hover:bg-[#12B5A6] active:scale-90 transition-all duration-150"
                 >
                   <Send className="w-4 h-4" />
@@ -260,9 +341,8 @@ export default function TestChatbot() {
           <div>
             <h3 className="font-semibold text-[#0B1220] text-sm mb-1.5">How this works</h3>
             <p className="text-[#475569] text-xs leading-relaxed">
-              This is a preview of how your trained chatbot appears on any website. Once
-              you embed the script, this exact widget shows up in the corner of your site —
-              answering patients or customers 24/7 from your own training data.
+              This is a preview of how your trained chatbot appears on any website. It runs a real
+              AI model directly in the browser, understanding natural conversation — not just keywords.
             </p>
           </div>
         </div>

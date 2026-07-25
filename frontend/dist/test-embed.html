@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embed Test — TechFusionEra AI Chatbot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    /* Fake website header */
+    .header {
+      background: linear-gradient(135deg, #0F9B8E, #0B1220);
+      color: white;
+      padding: 20px 32px;
+    }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header p { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+
+    /* Fake website content */
+    .content {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .card h2 { font-size: 18px; margin-bottom: 12px; color: #0B1220; }
+    .card p { font-size: 14px; line-height: 1.7; color: #666; }
+    .card .placeholder {
+      height: 12px;
+      background: #e8e8e8;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+    .card .placeholder.w75 { width: 75%; }
+    .card .placeholder.w90 { width: 90%; }
+    .card .placeholder.w60 { width: 60%; }
+    .card .placeholder.w80 { width: 80%; }
+    .card .img-placeholder {
+      height: 160px;
+      background: linear-gradient(135deg, #e8e8e8, #f2f2f2);
+      border-radius: 8px;
+      margin: 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #bbb;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #0F9B8E;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 32px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Fake Hospital Website -->
+  <div class="header">
+    <h1>🏥 City General Hospital</h1>
+    <p>Your Health, Our Priority — Since 1985</p>
+  </div>
+
+  <div class="content">
+    <div class="card">
+      <span class="badge">Welcome</span>
+      <h2>About Our Hospital</h2>
+      <p>City General Hospital is a multi-specialty hospital providing world-class healthcare services. 
+         We have 500+ beds, 50+ specialist doctors, and 24/7 emergency services.</p>
+      <div class="img-placeholder">🏥 Hospital Image Placeholder</div>
+    </div>
+
+    <div class="card">
+      <h2>Our Departments</h2>
+      <div class="placeholder w90"></div>
+      <div class="placeholder w75"></div>
+      <div class="placeholder w80"></div>
+      <div class="placeholder w60"></div>
+      <p style="margin-top: 16px;">Cardiology • Neurology • Orthopedics • Pediatrics • Dermatology • ENT • Ophthalmology</p>
+    </div>
+
+    <div class="card">
+      <h2>Contact Information</h2>
+      <p>📞 Emergency: 108 | Reception: 022-12345678<br>
+         📍 123, MG Road, Mumbai - 400001<br>
+         🕐 OPD: Mon-Sat 9AM-5PM | Emergency: 24/7</p>
+    </div>
+
+    <div class="card" style="background: #0B1220; color: white;">
+      <h2 style="color: #0F9B8E;">💡 Test the Chatbot</h2>
+      <p style="color: rgba(255,255,255,0.7);">
+        Click the <strong style="color:#0F9B8E;">💬 chat button</strong> in the bottom-right corner to test the embedded AI chatbot widget.
+        Try asking: "What are the visiting hours?" or "How do I book an appointment?"
+      </p>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; 2026 City General Hospital — This is a demo page to test the TechFusionEra AI Chatbot embed widget.
+  </div>
+
+  <!-- ✅ TechFusionEra AI Chatbot Embed Script -->
+  <script 
+    src="/embed/tf-chatbot.js"
+    data-api-key="tf_demo_123456789"
+    data-theme="hospital"
+    data-position="bottom-right"
+    data-title="Chat with us"
+    data-greeting="Hello! How can I help you today?"
+  ></script>
+
+</body>
+
+</html>

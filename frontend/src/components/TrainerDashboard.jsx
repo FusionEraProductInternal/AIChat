@@ -53,29 +53,53 @@ export default function TrainerDashboard({ onTrained }) {
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+ const handleFileUpload = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
 
-    if (file.size > 10240) {
-      setError('File size must be under 10KB')
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      try {
-        const text = event.target.result
-        JSON.parse(text) // Validate JSON
-        setTrainingData(text)
-        setFileName(file.name)
-        setError('')
-      } catch {
-        setError('Invalid JSON file. Please upload valid JSON.')
-      }
-    }
-    reader.readAsText(file)
+  const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+  if (file.size > MAX_SIZE) {
+    setError('File size must be under 5MB')
+    return
   }
+
+  setError('')
+  const ext = file.name.split('.').pop().toLowerCase()
+
+  try {
+    if (ext === 'json') {
+      const text = await file.text()
+      JSON.parse(text) // validate
+      setTrainingData(text)
+      setFileName(file.name)
+    } else if (ext === 'pdf') {
+      const pdfjsLib = await import('pdfjs-dist')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
+
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      let fullText = ''
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i)
+        const content = await page.getTextContent()
+        fullText += content.items.map(item => item.str).join(' ') + '\n'
+      }
+      setTrainingData(fullText.trim())
+      setFileName(file.name)
+    } else if (ext === 'docx') {
+      const mammoth = await import('mammoth')
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      setTrainingData(result.value.trim())
+      setFileName(file.name)
+    } else {
+      setError('Only JSON, PDF, or DOCX files are supported')
+    }
+  } catch (err) {
+    console.error(err)
+    setError('Could not read file. Please check the format and try again.')
+  }
+}
 
   const loadSample = (type) => {
     setTrainingData(SAMPLE_DATA[type])
@@ -115,11 +139,12 @@ export default function TrainerDashboard({ onTrained }) {
     setIsTraining(false)
     setTrained(true)
     onTrained({
-      industry,
-      dataSize: trainingData.length,
-      createdAt: new Date().toISOString(),
-      apiKey: 'tf_' + Math.random().toString(36).substring(2, 15)
-    })
+  industry,
+  dataSize: trainingData.length,
+  createdAt: new Date().toISOString(),
+  apiKey: 'tf_' + Math.random().toString(36).substring(2, 15),
+  trainingData
+})
   }
 
   const reset = () => {
@@ -135,7 +160,11 @@ export default function TrainerDashboard({ onTrained }) {
   }
 
   let dataPairCount = 0
-  try { dataPairCount = trainingData ? JSON.parse(trainingData).length : 0 } catch { dataPairCount = 0 }
+let isJsonData = false
+try {
+  const parsed = trainingData ? JSON.parse(trainingData) : null
+  if (Array.isArray(parsed)) { dataPairCount = parsed.length; isJsonData = true }
+} catch { dataPairCount = 0 }
 
   return (
     <div className="bg-[#FAFAF8] min-h-screen" style={{ fontFamily: "'Inter', ui-sans-serif, system-ui" }}>
@@ -269,15 +298,15 @@ export default function TrainerDashboard({ onTrained }) {
               <div className="w-12 h-12 rounded-xl bg-[#0F9B8E]/10 flex items-center justify-center mx-auto mb-3">
                 <Upload className="w-6 h-6 text-[#0F9B8E]" />
               </div>
-              <p className="font-semibold text-[#0B1220] text-sm">Tap to upload a JSON file</p>
-              <p className="text-[#475569] text-xs mt-1 font-mono">{'Max 10KB · [{"q":"...","a":"..."}]'}</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
+             <p className="font-semibold text-[#0B1220] text-sm">Tap to upload a file</p>
+<p className="text-[#475569] text-xs mt-1 font-mono">Max 5MB · JSON, PDF, or DOCX</p>
+<input
+  ref={fileInputRef}
+  type="file"
+  accept=".json,.pdf,.docx"
+  className="hidden"
+  onChange={handleFileUpload}
+/>
             </div>
 
             {fileName && (
@@ -336,10 +365,12 @@ export default function TrainerDashboard({ onTrained }) {
               </div>
 
               <div className="space-y-2.5 text-sm pt-1">
-                <div className="flex justify-between">
-                  <span className="text-[#475569]">Data pairs</span>
-                  <span className="font-mono font-medium text-[#0B1220]">{dataPairCount} Q&A</span>
-                </div>
+               <div className="flex justify-between">
+  <span className="text-[#475569]">{isJsonData ? 'Data pairs' : 'Data size'}</span>
+  <span className="font-mono font-medium text-[#0B1220]">
+    {isJsonData ? `${dataPairCount} Q&A` : `${(trainingData.length / 1024).toFixed(1)} KB`}
+  </span>
+</div>
                 <div className="flex justify-between">
                   <span className="text-[#475569]">Est. training time</span>
                   <span className="font-mono font-medium text-[#0B1220]">~2 minutes</span>

@@ -26,10 +26,11 @@ export default function EmbedGenerator({ config }) {
 
   const apiKey = config?.apiKey || 'tf_demo_123456789'
   const activeTheme = THEMES.find(t => t.id === selectedTheme)
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
 
   const embedCode = `<!-- TechFusionEra AI Chatbot -->
 <script 
-  src="https://yourdomain.com/embed/tf-chatbot.js"
+  src="${baseUrl}/embed/tf-chatbot.js"
   data-api-key="${apiKey}"
   data-theme="${selectedTheme}"
   data-position="${position}"
